@@ -60,7 +60,7 @@ async function fetchUpstream(uphost) {
   const upstreamUrl = buildUpstreamUrl(uphost);
   const response = await fetch(upstreamUrl, {
     headers: {
-      "User-Agent": "CF-Workers-Suball/1.0",
+      "User-Agent": "v2rayN/V7.18.0",
     },
   });
 
@@ -131,7 +131,7 @@ function extractNodes(decodedText) {
 
     try {
       const url = new URL(line);
-      const host = url.hostname;
+      const host = normalizeNodeHost(url.hostname);
       const port = url.port || "443";
 
       if (!host) {
@@ -140,7 +140,8 @@ function extractNodes(decodedText) {
 
       const remark = safeDecode(url.hash.startsWith("#") ? url.hash.slice(1) : "");
       const key = `${host}:${port}`;
-      const output = remark ? `${key}#${remark}` : key;
+      const outputHostPort = formatHostPort(host, port);
+      const output = remark ? `${outputHostPort}#${remark}` : outputHostPort;
 
       nodes.push({ key, line: output });
     } catch {
@@ -149,6 +150,22 @@ function extractNodes(decodedText) {
   }
 
   return nodes;
+}
+
+function normalizeNodeHost(host) {
+  if (!host) {
+    return "";
+  }
+
+  return host.replace(/^\[/, "").replace(/\]$/, "").toLowerCase();
+}
+
+function formatHostPort(host, port) {
+  if (host.includes(":")) {
+    return `[${host}]:${port}`;
+  }
+
+  return `${host}:${port}`;
 }
 
 function safeDecode(value) {
