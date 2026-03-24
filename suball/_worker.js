@@ -90,7 +90,7 @@ function parseUpHosts(rawValue) {
   }
 
   const hosts = rawValue
-    .split(",")
+    .split("|")
     .map((item) => normalizeHost(item))
     .filter(Boolean);
 
