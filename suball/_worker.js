@@ -1,5 +1,6 @@
 const DEFAULT_UPHOST = "sub.cmliussss.workers.dev";
 const UPSTREAM_PATH = "/sub";
+const DEFAULT_ACCESS_TOKEN = "dsjfwlfjwl";
 
 const UPSTREAM_PARAMS = {
   host: "edgetunnel-2z2.pages.dev",
@@ -10,8 +11,18 @@ const UPSTREAM_PARAMS = {
 };
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const requestUrl = new URL(request.url);
+    const accessToken = env.TOKEN || DEFAULT_ACCESS_TOKEN;
+
+    if (requestUrl.pathname !== `/${accessToken}`) {
+      return new Response("hello workld!", {
+        headers: {
+          "content-type": "text/plain; charset=utf-8",
+        },
+      });
+    }
+
     const uphosts = parseUpHosts(requestUrl.searchParams.get("uphost"));
 
     const results = await Promise.allSettled(
