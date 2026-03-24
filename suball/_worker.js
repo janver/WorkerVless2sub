@@ -16,7 +16,7 @@ export default {
     const accessToken = env.TOKEN || DEFAULT_ACCESS_TOKEN;
 
     if (requestUrl.pathname !== `/${accessToken}`) {
-      return new Response("hello workld!", {
+      return new Response("hello world!", {
         headers: {
           "content-type": "text/plain; charset=utf-8",
         },
