@@ -27,7 +27,7 @@ export default {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 2000);
+    }, 1500);
 
     let results = [];
 
