@@ -24,10 +24,20 @@ export default {
     }
 
     const uphosts = parseUpHosts(requestUrl.searchParams.get("uphost"));
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 2000);
 
-    const results = await Promise.allSettled(
-      uphosts.map((uphost) => fetchUpstream(uphost)),
-    );
+    let results = [];
+
+    try {
+      results = await Promise.allSettled(
+        uphosts.map((uphost) => fetchUpstream(uphost, controller.signal)),
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const mergedLines = [];
     const seen = new Set();
@@ -35,6 +45,7 @@ export default {
 
     for (const result of results) {
       if (result.status !== "fulfilled") {
+        console.error("upstream request failed:", result.reason);
         continue;
       }
 
@@ -67,21 +78,26 @@ export default {
   },
 };
 
-async function fetchUpstream(uphost) {
+async function fetchUpstream(uphost, signal) {
   const upstreamUrl = buildUpstreamUrl(uphost);
-  const response = await fetch(upstreamUrl, {
-    headers: {
-      "User-Agent": "v2rayN/V7.18.0",
-    },
-  });
+  try {
+    const response = await fetch(upstreamUrl, {
+      headers: {
+        "User-Agent": "v2rayN/V7.18.0",
+      },
+      signal,
+    });
 
-  if (!response.ok) {
-    throw new Error(`upstream ${uphost} returned ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`upstream ${uphost} returned ${response.status}`);
+    }
+
+    const encodedText = (await response.text()).trim();
+    const decodedText = decodeBase64Utf8(encodedText);
+    return extractNodes(decodedText);
+  } catch (error) {
+    throw new Error(`upstream ${uphost} failed: ${error.message}`);
   }
-
-  const encodedText = (await response.text()).trim();
-  const decodedText = decodeBase64Utf8(encodedText);
-  return extractNodes(decodedText);
 }
 
 function parseUpHosts(rawValue) {
